@@ -1,0 +1,22 @@
+# Netlify configuration for the GRIDWISE static frontend.
+# The frontend is plain HTML/CSS/JS: no build step, no npm.
+# Deploy from the repository root; Netlify publishes the frontend/ directory.
+
+[build]
+  publish = "frontend"
+  command = "echo 'Static site: no build required'"
+
+# Single-page site: serve index.html at the root.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Basic security headers (no secrets are involved; the browser never
+# receives or sends the Gemini API key).
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"

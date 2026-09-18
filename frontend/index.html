@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GRIDWISE — Smart Campus Energy Optimization</title>
+  <meta name="description" content="LLM-assisted campus energy optimization: operator notes to a valid, cost-minimizing 24-hour schedule." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="bg-glow" aria-hidden="true"></div>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none">
+            <path d="M13 2 4.5 13.5H11l-1.5 8.5L18 10h-6.5L13 2Z" fill="url(#bolt)"/>
+            <defs>
+              <linearGradient id="bolt" x1="4" y1="2" x2="18" y2="22">
+                <stop stop-color="#5EEAD4"/><stop offset="1" stop-color="#38BDF8"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <span class="brand-name">GRIDWISE</span>
+          <span class="brand-sub">Smart Campus Energy Optimization</span>
+        </div>
+      </div>
+      <div class="header-status">
+        <span id="env-badge" class="badge badge-demo">DEMO</span>
+        <span id="api-status" class="status-pill" data-state="unknown">
+          <span class="status-dot"></span>
+          <span id="api-status-text">Checking API…</span>
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="hero">
+      <div class="hero-copy">
+        <h1>Optimize Campus Energy with <span class="accent">Natural-Language Directives</span></h1>
+        <p class="hero-sub">
+          Operator notes are interpreted by Google Gemini Flash, hard-validated by deterministic
+          guardrails, and turned into a cost-minimizing 24-hour energy schedule — every plan is
+          independently replayed before it is shown.
+        </p>
+      </div>
+
+      <section class="panel operator-panel" aria-label="Operator control panel">
+        <div class="panel-head">
+          <h2>Operator Control Panel</h2>
+          <button id="btn-load-demo" class="btn btn-ghost" type="button">Load Demo Scenario</button>
+        </div>
+
+        <div class="field">
+          <label for="scenario-id">Scenario ID</label>
+          <input id="scenario-id" type="text" value="GRID-101" placeholder="GRID-101" />
+        </div>
+
+        <div class="field">
+          <label>Operator Notes <span class="hint">(1–3 natural-language notes)</span></label>
+          <div id="notes-list"></div>
+          <button id="btn-add-note" class="btn btn-ghost btn-small" type="button">+ Add note</button>
+        </div>
+
+        <div class="panel-actions">
+          <button id="btn-optimize" class="btn btn-primary" type="button">Optimize Energy</button>
+          <span id="optimize-status" class="optimize-status" hidden></span>
+        </div>
+
+        <div id="pipeline" class="pipeline" aria-label="Processing pipeline">
+          <div class="pipeline-step" data-stage="note"><span class="pi">1</span> Operator Note</div>
+          <div class="pipeline-step" data-stage="llm"><span class="pi">2</span> Gemini Interpretation</div>
+          <div class="pipeline-step" data-stage="guard"><span class="pi">3</span> Guardrails</div>
+          <div class="pipeline-step" data-stage="opt"><span class="pi">4</span> Optimization</div>
+          <div class="pipeline-step" data-stage="val"><span class="pi">5</span> Validation</div>
+        </div>
+      </section>
+    </section>
+  </main>
+  <section id="results" class="results" hidden>
+    <div class="results-head">
+      <h2>Optimization Result <span id="scenario-label" class="scenario-label"></span></h2>
+      <div id="validation-badge" class="validation-badge ok">✓ PLAN VALIDATED</div>
+    </div>
+
+    <div class="cards">
+      <div class="card">
+        <div class="card-label">Total Grid Energy</div>
+        <div class="card-value"><span id="stat-total-grid">–</span><span class="card-unit">kWh</span></div>
+      </div>
+      <div class="card">
+        <div class="card-label">Total Cost</div>
+        <div class="card-value"><span id="stat-total-cost">–</span><span class="card-unit">BDT</span></div>
+      </div>
+      <div class="card">
+        <div class="card-label">Peak Grid Energy</div>
+        <div class="card-value"><span id="stat-peak-grid">–</span><span class="card-unit">kWh</span></div>
+      </div>
+      <div class="card">
+        <div class="card-label">Final Battery Energy</div>
+        <div class="card-value"><span id="stat-final-battery">–</span><span class="card-unit">kWh</span></div>
+      </div>
+    </div>
+
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Directive Interpretation</h2>
+        <span class="hint">One machine-checkable interpretation per note, in note_index order</span>
+      </div>
+      <div id="interpretation-list" class="interp-list"></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <h2>24-Hour Energy Schedule</h2>
+        <div class="legend">
+          <span class="lg"><i class="sw sw-demand"></i>Demand</span>
+          <span class="lg"><i class="sw sw-solar"></i>Solar</span>
+          <span class="lg"><i class="sw sw-grid"></i>Grid</span>
+          <span class="lg"><i class="sw sw-batt"></i>Battery Δ</span>
+        </div>
+
+      <canvas id="energy-chart" height="270"></canvas>
+      <div id="chart-error" class="chart-error" hidden>
+        Chart rendering is unavailable; the full 24-hour table below remains accurate.
+      </div>
+      <div id="chart-tooltip" class="chart-tooltip" hidden></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Hourly Plan</h2>
+        <span class="hint">battery_action: charge / discharge / idle</span>
+      </div>
+      <div class="table-wrap">
+        <table id="plan-table">
+          <thead>
+            <tr>
+              <th>Hour</th>
+              <th>Grid (kWh)</th>
+              <th>Solar Used (kWh)</th>
+              <th>Battery Action</th>
+              <th>Battery kWh</th>
+              <th>Battery Energy After (kWh)</th>
+            </tr>
+          </thead>
+          <tbody id="plan-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><h2>Plan Summary</h2></div>
+      <p id="plan-summary" class="plan-summary"></p>
+    </section>
+  </section>
+  <footer class="site-footer">
+    <span>GRIDWISE — BUP CSE Fest 2026 · Smart Campus Energy Optimization Challenge</span>
+    <span class="foot-dim">LLM → Guardrails → Optimizer → Validation</span>
+  </footer>
+
+  <div id="error-banner" class="error-banner" hidden></div>
+  <script src="script.js"></script>
+</body>
+</html>
