@@ -7,10 +7,10 @@
 
 /* ------------------------------------------------------------
    CONFIGURATION — the only line you need to edit.
-   Local development:  http://localhost:8000
-   Production:         https://your-deployed-backend.example.com
+   Local development:  https://bup-preli-77y6.onrender.com
+   Production:         https://bup-preli-77y6.onrender.com
    ------------------------------------------------------------ */
-const API_BASE_URL = "http://localhost:8000";
+const API_BASE_URL = "https://bup-preli-77y6.onrender.com";
 
 /* ---------------- State ---------------- */
 let notes = [
